@@ -1,0 +1,581 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Etiquetero</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Concepto: banco de trabajo a la izquierda (negocio, medidas, lista de productos), pliego de etiquetas a escala a la derecha. */
+:root {
+  --bg: #f2f3f1;
+  --panel: #ffffff;
+  --fg: #1c211f;
+  --muted: #5d6762;
+  --line: #d8dcd9;
+  --accent: #c2410c;
+  --accent-fg: #ffffff;
+  --paper: #fbfbf8;
+  --ink: #111111;
+  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141816; --panel: #1d2220; --fg: #e8ece9; --muted: #98a39d; --line: #333b37;
+    --accent: #f08a54; --accent-fg: #1a0e07; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141816; --panel: #1d2220; --fg: #e8ece9; --muted: #98a39d; --line: #333b37;
+  --accent: #f08a54; --accent-fg: #1a0e07; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.45;
+  padding-block: 20px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1 { font-family: var(--font-display); font-size: 26px; margin: 0; letter-spacing: -0.01em; }
+.sub { color: var(--muted); margin: 2px 0 0; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; max-width: 1280px; margin: 0 auto 18px; }
+.app { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 18px; max-width: 1280px; margin: 0 auto; align-items: start; }
+@media (max-width: 860px) { .app { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel h2 { font-family: var(--font-display); font-size: 12px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); font-weight: 500; min-width: 0; }
+input, textarea, select {
+  font: inherit; font-size: 14px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 7px 8px; width: 100%; min-width: 0;
+}
+textarea { resize: vertical; min-height: 84px; }
+input:focus-visible, textarea:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.check { flex-direction: row; align-items: center; gap: 8px; color: var(--fg); font-size: 13px; }
+.check input { width: auto; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 360px; }
+th { text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 0 4px 6px; }
+td { padding: 3px 3px; }
+td input { padding: 6px 6px; }
+td.mono input { font-family: var(--font-mono); font-size: 13px; }
+.btn { font: inherit; font-weight: 600; font-size: 13px; padding: 8px 12px; border-radius: 4px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn.x { padding: 6px 9px; color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.note { font-size: 12px; color: var(--muted); margin: 0; }
+.stat { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.preview { overflow: auto; padding: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; min-width: 0; }
+.previewbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+.previewbar h2 { font-family: var(--font-display); font-size: 12px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0; }
+.zoomctl { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.zoomctl input { width: 120px; padding: 0; }
+.sheetscroll { overflow: auto; }
+.sheet { display: grid; gap: 2mm; width: max-content; padding: 4mm; background: #ffffff; border: 1px dashed var(--line); transform-origin: top left; }
+/* Etiqueta: siempre papel claro con tinta oscura, igual que sale impresa */
+.lbl {
+  background: var(--paper); color: var(--ink); width: var(--w); height: var(--h); padding: 1.6mm; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: flex-start; gap: 0.9mm; font-family: Arial, Helvetica, sans-serif;
+  break-inside: avoid; page-break-inside: avoid;
+}
+.lbl.cut { outline: 0.2mm solid #888; }
+.lbl .top { display: flex; justify-content: space-between; align-items: baseline; gap: 1mm; font-size: 6pt; font-weight: 700; line-height: 1; white-space: nowrap; }
+.lbl .top b { font-size: 6pt; }
+.lbl svg.bar { width: 100%; height: 9mm; display: block; flex: none; }
+.lbl .price { font-size: 11pt; font-weight: 700; line-height: 1; }
+.lbl .co { font-size: 3.6pt; line-height: 1.18; color: #333; white-space: pre-line; overflow: hidden; }
+@media print {
+  @page { margin: 6mm; }
+  html, body { background: #ffffff !important; padding: 0 !important; }
+  header, .controls, .previewbar, .noprint { display: none !important; }
+  .app { display: block; max-width: none; }
+  .preview { border: 0; padding: 0; overflow: visible; background: #fff; }
+  .sheetscroll { overflow: visible; }
+  .sheet { transform: none !important; border: 0; padding: 0; zoom: 1 !important; background: #fff; }
+  .lbl { background: #fff; }
+}
+</style>
+
+<header>
+  <div>
+    <h1>Etiquetero</h1>
+    <p class="sub">Etiquetas de precio con talla, código de barras y datos de tu negocio.</p>
+  </div>
+  <div class="row noprint" id="actions">
+    <button class="btn" id="btnExample" type="button">Cargar ejemplos</button>
+    <button class="btn primary" id="btnPng" type="button" hidden>Descargar PNG</button>
+    <button class="btn primary" id="btnPdf" type="button" hidden>Descargar PDF</button>
+    <button class="btn" id="btnPrint" type="button" hidden>Imprimir</button>
+  </div>
+</header>
+
+<main class="app">
+  <section class="controls" style="display:flex;flex-direction:column;gap:18px;min-width:0">
+    <div class="panel">
+      <h2>Tu negocio</h2>
+      <label>Nombre de la empresa
+        <input id="coName" type="text" value="Calzado Ejemplo S.A.">
+      </label>
+      <label>Dirección y datos legales
+        <textarea id="coText">Centro Comercial Ejemplo, 2do piso, local 12. Carretera Norte, Managua, Nicaragua.
+RUC: J0000000000000 (reemplaza con el tuyo)</textarea>
+      </label>
+    </div>
+
+    <div class="panel">
+      <h2>Medidas de la etiqueta</h2>
+      <div class="grid3">
+        <label>Ancho (mm)<input id="wmm" type="number" min="20" max="120" step="1" value="33"></label>
+        <label>Alto (mm)<input id="hmm" type="number" min="20" max="120" step="1" value="30"></label>
+        <label>Por fila<input id="cols" type="number" min="1" max="8" step="1" value="3"></label>
+      </div>
+      <div class="grid2">
+        <label>Moneda<input id="cur" type="text" value="C$" maxlength="4"></label>
+        <label>Texto de talla<input id="sizeWord" type="text" value="Talla" maxlength="12"></label>
+      </div>
+      <label class="check"><input id="cut" type="checkbox" checked> Dibujar borde de corte</label>
+    </div>
+
+    <div class="panel">
+      <h2>Productos</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Talla</th><th>Código</th><th>Precio</th><th>Cant.</th><th></th></tr></thead>
+          <tbody id="items"></tbody>
+        </table>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnAdd" type="button">Agregar producto</button>
+        <span class="stat" id="count"></span>
+      </div>
+      <p class="note">El código de barras se genera con lo que escribes en Código (Code 128). Los espacios se ignoran en las barras y se muestran en el texto.</p>
+      <div class="scanbox noprint" style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px">
+        <h2>Escanear un producto</h2>
+        <div class="row">
+          <button class="btn primary" id="btnScan" type="button" hidden>Escanear con cámara</button>
+          <button class="btn" id="btnPhoto" type="button">Escanear desde foto</button>
+          <input id="photoIn" type="file" accept="image/*" capture="environment" hidden>
+        </div>
+        <label>Lector de códigos (pistola USB o escribir)
+          <input id="wedge" type="text" inputmode="numeric" placeholder="Escanea o escribe el código y pulsa Enter" autocomplete="off">
+        </label>
+        <video id="cam" playsinline muted hidden style="width:100%;max-height:260px;border-radius:4px;background:#000"></video>
+        <div class="row" id="camBar" hidden><button class="btn" id="btnStop" type="button">Cerrar cámara</button></div>
+        <p class="note" id="scanMsg" role="status">Si tienes la etiqueta pero te faltan más, escanea su código y se agrega a la lista. Si el código ya está, suma una etiqueta.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="preview">
+    <div class="previewbar">
+      <h2>Vista previa del pliego</h2>
+      <div class="zoomctl noprint"><span>Zoom</span><input id="zoom" type="range" min="1" max="3" step="0.1" value="1.6" aria-label="Zoom de la vista previa"></div>
+    </div>
+    <p class="note noprint" id="printHint" hidden style="margin-bottom:12px">Medida actual: 33 mm de largo por 30 mm de alto. Descarga el PNG o el PDF con los botones de arriba. Para imprimir directo, abre el archivo Etiquetero.html en tu navegador.</p>
+    <div class="sheetscroll"><div class="sheet" id="sheet"></div></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var P = ["212222","222122","222221","121223","121322","131222","122213","122312","132212","221213","221312","231212","112232","122132","122231","113222","123122","123221","223211","221132","221231","213212","223112","312131","311222","321122","321221","312212","322112","322211","212123","212321","232121","111323","131123","131321","112313","132113","132311","211313","231113","231311","112133","112331","132131","113123","113321","133121","313121","211331","231131","213113","213311","213131","311123","311321","331121","312113","312311","332111","314111","221411","431111","111224","111422","121124","121421","141122","141221","112214","112412","122114","122411","142112","142211","241211","221114","413111","241112","134111","111242","121142","121241","114212","124112","124211","411212","421112","421211","212141","214121","412121","111143","111341","131141","114113","114311","411113","411311","113141","114131","311141","411131","211412","211214","211232","2331112"];
+
+  function code128(text) {
+    var vals = [104], sum = 104;
+    for (var i = 0; i < text.length; i++) {
+      var c = text.charCodeAt(i) - 32;
+      if (c < 0 || c > 95) c = 0;
+      vals.push(c); sum += c * (i + 1);
+    }
+    vals.push(sum % 103); vals.push(106);
+    return vals.map(function (v) { return P[v]; }).join("");
+  }
+  function barcodeSVG(text) {
+    var pat = code128(text), quiet = 8, x = quiet, rects = "";
+    for (var i = 0; i < pat.length; i++) {
+      var w = +pat[i];
+      if (i % 2 === 0) rects += '<rect x="' + x + '" y="0" width="' + w + '" height="10" fill="#111111"/>';
+      x += w;
+    }
+    var total = x + quiet;
+    return '<svg class="bar" viewBox="0 0 ' + total + ' 10" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' + rects + "</svg>";
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var examples = [
+    { talla: "9", code: "199247 2229", price: "695", qty: 2 },
+    { talla: "10", code: "199247 2230", price: "695", qty: 2 },
+    { talla: "11", code: "199247 2231", price: "765", qty: 3 }
+  ];
+  var state = { items: examples.map(function (x) { return Object.assign({}, x); }) };
+  var STORE = "etiquetero.v2";
+  var fields = ["coName", "coText", "wmm", "hmm", "cols", "cur", "sizeWord", "cut"];
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (d.items && d.items.length) state.items = d.items;
+      fields.forEach(function (f) {
+        if (d.f && d.f[f] !== undefined) { if (f === "cut") $(f).checked = !!d.f[f]; else $(f).value = d.f[f]; }
+      });
+    } catch (e) {}
+  }
+  function save() {
+    try {
+      var f = {};
+      fields.forEach(function (k) { f[k] = k === "cut" ? $(k).checked : $(k).value; });
+      localStorage.setItem(STORE, JSON.stringify({ items: state.items, f: f }));
+    } catch (e) {}
+  }
+
+  function renderItems() {
+    var tb = $("items");
+    tb.innerHTML = "";
+    state.items.forEach(function (it, i) {
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><input id="t' + i + '" data-k="talla" value="' + esc(it.talla) + '" aria-label="Talla"></td>' +
+        '<td class="mono"><input id="c' + i + '" data-k="code" value="' + esc(it.code) + '" aria-label="Código"></td>' +
+        '<td><input id="p' + i + '" data-k="price" value="' + esc(it.price) + '" inputmode="decimal" aria-label="Precio"></td>' +
+        '<td><input id="q' + i + '" data-k="qty" type="number" min="1" max="500" value="' + esc(it.qty) + '" aria-label="Cantidad" style="width:64px"></td>' +
+        '<td><button class="btn x" type="button" data-del="' + i + '" aria-label="Quitar producto">&times;</button></td>';
+      tr.querySelectorAll("input").forEach(function (inp) {
+        inp.addEventListener("input", function () {
+          state.items[i][inp.dataset.k] = inp.dataset.k === "qty" ? Math.max(1, Math.min(500, parseInt(inp.value, 10) || 1)) : inp.value;
+          renderSheet(); save();
+        });
+      });
+      tr.querySelector("[data-del]").addEventListener("click", function () {
+        state.items.splice(i, 1); renderItems(); renderSheet(); save();
+      });
+      tb.appendChild(tr);
+    });
+  }
+
+  function renderSheet() {
+    var w = Math.max(20, +$("wmm").value || 48), h = Math.max(20, +$("hmm").value || 40), cols = Math.max(1, +$("cols").value || 3);
+    var sheet = $("sheet");
+    sheet.style.gridTemplateColumns = "repeat(" + cols + ", " + w + "mm)";
+    sheet.style.setProperty("--w", w + "mm"); sheet.style.setProperty("--h", h + "mm");
+    var cur = $("cur").value, sw = $("sizeWord").value;
+    var co = esc($("coName").value) + (($("coName").value && $("coText").value) ? "\n" : "") + esc($("coText").value);
+    var cut = $("cut").checked, html = "", n = 0;
+    state.items.forEach(function (it) {
+      var q = Math.max(1, Math.min(500, +it.qty || 1));
+      var bc = String(it.code || "").replace(/\s+/g, "");
+      var one =
+        '<div class="lbl' + (cut ? " cut" : "") + '">' +
+        '<div class="top"><span>' + (it.talla ? esc(sw) + " " + esc(it.talla) : "") + "</span><b>" + esc(it.code || "") + "</b></div>" +
+        (bc ? barcodeSVG(bc) : '<div style="height:9mm"></div>') +
+        '<div class="price">' + (it.price ? esc(cur) + " " + esc(it.price) : "") + "</div>" +
+        '<div class="co">' + co + "</div></div>";
+      for (var k = 0; k < q; k++) { html += one; n++; }
+    });
+    sheet.innerHTML = html;
+    $("count").textContent = n + (n === 1 ? " etiqueta" : " etiquetas");
+  }
+
+  function applyZoom() {
+    var z = +$("zoom").value;
+    $("sheet").style.zoom = z;
+  }
+
+  fields.forEach(function (f) { $(f).addEventListener("input", function () { renderSheet(); save(); }); $(f).addEventListener("change", function () { renderSheet(); save(); }); });
+  $("btnAdd").addEventListener("click", function () {
+    var last = state.items[state.items.length - 1] || { price: "" };
+    state.items.push({ talla: "", code: "", price: last.price, qty: 1 });
+    renderItems(); renderSheet(); save();
+    var el = $("t" + (state.items.length - 1)); if (el) el.focus();
+  });
+  $("btnExample").addEventListener("click", function () {
+    state.items = examples.map(function (x) { return Object.assign({}, x); });
+    renderItems(); renderSheet(); save();
+  });
+  $("zoom").addEventListener("input", applyZoom);
+
+  var inFrame = false;
+  try { inFrame = window.self !== window.top; } catch (e) { inFrame = true; }
+  /* ---------- Escanear productos ---------- */
+  var scanStream = null, scanTimer = null, scanBusy = false;
+  var FORMATS = ["code_128", "ean_13", "ean_8", "code_39", "upc_a", "upc_e", "itf", "codabar"];
+  function setMsg(t) { $("scanMsg").textContent = t; }
+  function addScanned(raw) {
+    var code = String(raw || "").trim();
+    if (!code) return;
+    var key = code.replace(/\s+/g, ""), idx = -1;
+    state.items.forEach(function (it, i) { if (String(it.code || "").replace(/\s+/g, "") === key) idx = i; });
+    if (idx >= 0) {
+      state.items[idx].qty = Math.min(500, (+state.items[idx].qty || 1) + 1);
+      setMsg("Ya estaba en la lista: sumé 1 etiqueta a " + code + ".");
+    } else {
+      var last = state.items[state.items.length - 1] || { price: "" };
+      state.items.push({ talla: "", code: code, price: last.price, qty: 1 });
+      idx = state.items.length - 1;
+      setMsg("Agregué " + code + ". Escribe la talla y revisa el precio.");
+    }
+    renderItems(); renderSheet(); save();
+    var el = $("t" + idx);
+    if (el && !state.items[idx].talla) el.focus();
+  }
+  /* Lector nativo (Chrome Android / macOS). Solo se usa si de verdad soporta Code 128;
+     en Windows, iPhone y Firefox normalmente no existe o viene vacío. */
+  var detectorP = null;
+  function getDetector() {
+    if (detectorP) return detectorP;
+    detectorP = new Promise(function (resolve) {
+      if (!("BarcodeDetector" in window)) return resolve(null);
+      var BD = window.BarcodeDetector;
+      var p = BD.getSupportedFormats ? BD.getSupportedFormats() : Promise.resolve(FORMATS);
+      p.then(function (sup) {
+        var f = FORMATS.filter(function (x) { return sup.indexOf(x) >= 0; });
+        if (f.indexOf("code_128") < 0) return resolve(null);
+        try { resolve(new BD({ formats: f })); } catch (e) { resolve(null); }
+      }).catch(function () { resolve(null); });
+    });
+    return detectorP;
+  }
+  /* Lector de respaldo: ZXing (se descarga la primera vez, necesita internet) */
+  function loadZX(cb) {
+    if (window.ZXing) return cb(null);
+    var s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js";
+    s.onload = function () { cb(window.ZXing ? null : new Error("zxing")); };
+    s.onerror = function () { cb(new Error("zxing")); };
+    document.head.appendChild(s);
+  }
+  var zxMulti = null;
+  function zxDecodeCanvas(cv) {
+    var Z = window.ZXing;
+    if (!zxMulti) {
+      zxMulti = new Z.MultiFormatReader();
+      var hints = new Map(), B = Z.BarcodeFormat;
+      hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [B.CODE_128, B.EAN_13, B.EAN_8, B.UPC_A, B.UPC_E, B.CODE_39, B.ITF, B.CODABAR]);
+      hints.set(Z.DecodeHintType.TRY_HARDER, true);
+      zxMulti.setHints(hints);
+    }
+    var src = new Z.HTMLCanvasElementLuminanceSource(cv);
+    try { return zxMulti.decodeWithState(new Z.BinaryBitmap(new Z.HybridBinarizer(src))).getText(); } catch (e) {}
+    try { return zxMulti.decodeWithState(new Z.BinaryBitmap(new Z.HybridBinarizer(src.rotateCounterClockwise()))).getText(); } catch (e) {}
+    return null;
+  }
+  var grab = document.createElement("canvas");
+  function drawToCanvas(src, sw, sh) {
+    var k = Math.min(1, 1280 / Math.max(sw, sh));
+    grab.width = Math.round(sw * k); grab.height = Math.round(sh * k);
+    grab.getContext("2d").drawImage(src, 0, 0, grab.width, grab.height);
+    return grab;
+  }
+  function stopCamera() {
+    if (scanTimer) { clearInterval(scanTimer); scanTimer = null; }
+    scanBusy = false;
+    if (scanStream) { scanStream.getTracks().forEach(function (t) { t.stop(); }); scanStream = null; }
+    var cam = $("cam"); cam.pause(); cam.srcObject = null; cam.hidden = true; $("camBar").hidden = true;
+  }
+  function found(v) { stopCamera(); addScanned(v); if (navigator.vibrate) try { navigator.vibrate(80); } catch (e) {} }
+  function scanLoop(cam, decodeFrame) {
+    setMsg("Apunta la cámara al código de barras, con el código derecho y bien iluminado.");
+    scanTimer = setInterval(function () {
+      if (scanBusy || !scanStream || cam.readyState < 2 || !cam.videoWidth) return;
+      scanBusy = true;
+      Promise.resolve().then(decodeFrame).then(function (v) { scanBusy = false; if (v && scanStream) found(v); })
+        .catch(function () { scanBusy = false; });
+    }, 250);
+  }
+  function camError(e) {
+    var n = e && e.name;
+    if (inFrame) setMsg("Aquí dentro de Claude la cámara está bloqueada. Descarga el archivo y ábrelo directo en Chrome (o súbelo a una página https) para usar la cámara. Mientras tanto usa Escanear desde foto.");
+    else if (n === "NotAllowedError" || n === "SecurityError") setMsg("El permiso de cámara está bloqueado. Toca el candado junto a la dirección, permite la Cámara y recarga la página.");
+    else if (n === "NotFoundError" || n === "OverconstrainedError") setMsg("No encontré ninguna cámara en este equipo. Usa Escanear desde foto o el lector de códigos.");
+    else if (n === "NotReadableError") setMsg("La cámara la está usando otra app (WhatsApp, Zoom…). Ciérrala e intenta de nuevo.");
+    else setMsg("No pude abrir la cámara (" + (n || "error") + "). Usa Escanear desde foto.");
+  }
+  function startCamera() {
+    if (scanStream) return;
+    if (!window.isSecureContext) { setMsg("El navegador solo permite la cámara si la página se abre con https:// o como archivo en este mismo equipo. Con http:// no funciona."); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setMsg("Este navegador no permite usar la cámara. Usa Escanear desde foto."); return; }
+    setMsg("Abriendo la cámara…");
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false
+    }).catch(function () {
+      return navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    }).then(function (stream) {
+      scanStream = stream;
+      var cam = $("cam");
+      cam.setAttribute("playsinline", ""); cam.muted = true;
+      cam.srcObject = stream; cam.hidden = false; $("camBar").hidden = false;
+      cam.play().catch(function () {});
+      getDetector().then(function (det) {
+        if (!scanStream) return;
+        if (det) {
+          scanLoop(cam, function () {
+            return det.detect(cam).then(function (r) { return r && r.length ? r[0].rawValue : null; });
+          });
+        } else {
+          setMsg("Cargando el lector…");
+          loadZX(function (err) {
+            if (!scanStream) return;
+            if (err) { stopCamera(); setMsg("No pude cargar el lector de códigos (necesita internet la primera vez). Usa el lector de códigos USB o escribe el código."); return; }
+            scanLoop(cam, function () { return zxDecodeCanvas(drawToCanvas(cam, cam.videoWidth, cam.videoHeight)); });
+          });
+        }
+      });
+    }).catch(camError);
+  }
+  function scanPhoto(f) {
+    setMsg("Leyendo la foto…");
+    var notFound = "No encontré un código en la foto. Acércate más, que el código se vea completo, derecho y enfocado.";
+    function withZX() {
+      loadZX(function (err) {
+        if (err) { setMsg("No pude cargar el lector de fotos (necesita internet). Escribe el código en el lector de códigos."); return; }
+        var url = URL.createObjectURL(f), img = new Image();
+        img.onload = function () {
+          var v = zxDecodeCanvas(drawToCanvas(img, img.naturalWidth, img.naturalHeight));
+          URL.revokeObjectURL(url);
+          if (v) addScanned(v); else setMsg(notFound);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); setMsg("No pude abrir la foto."); };
+        img.src = url;
+      });
+    }
+    getDetector().then(function (det) {
+      if (!det || !window.createImageBitmap) return withZX();
+      createImageBitmap(f).then(function (bm) { return det.detect(bm); }).then(function (r) {
+        if (r && r.length) addScanned(r[0].rawValue); else withZX();
+      }).catch(withZX);
+    });
+  }
+  $("btnScan").addEventListener("click", startCamera);
+  $("btnStop").addEventListener("click", function () { stopCamera(); setMsg("Cámara cerrada."); });
+  $("btnPhoto").addEventListener("click", function () { $("photoIn").click(); });
+  $("photoIn").addEventListener("change", function () { var f = this.files && this.files[0]; this.value = ""; if (f) scanPhoto(f); });
+  $("wedge").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); addScanned(this.value); this.value = ""; }
+  });
+
+  /* ---------- Descarga: dibuja el pliego en un canvas a 300 dpi ---------- */
+  var PPM = 300 / 25.4;
+  function expandLabels() {
+    var out = [];
+    state.items.forEach(function (it) { var q = Math.max(1, Math.min(500, +it.qty || 1)); for (var k = 0; k < q; k++) out.push(it); });
+    return out;
+  }
+  function drawLabel(ctx, x, y, w, h, it, cur, sw, coText, cut) {
+    var pad = 1.6, pt = 0.3528, inner = w - pad * 2;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = "#111111"; ctx.textBaseline = "alphabetic";
+    var cy = y + pad;
+    ctx.font = "bold " + (6 * pt) + "px Arial, Helvetica, sans-serif";
+    ctx.textAlign = "left";
+    if (it.talla) ctx.fillText(sw + " " + it.talla, x + pad, cy + 6 * pt * 0.85);
+    ctx.textAlign = "right";
+    if (it.code) ctx.fillText(String(it.code), x + w - pad, cy + 6 * pt * 0.85);
+    cy += 6 * pt + 0.9;
+    var bc = String(it.code || "").replace(/\s+/g, "");
+    if (bc) {
+      var pat = code128(bc), total = 16, i;
+      for (i = 0; i < pat.length; i++) total += +pat[i];
+      var u = inner / total, pos = 8;
+      for (i = 0; i < pat.length; i++) {
+        var bw = +pat[i];
+        if (i % 2 === 0) ctx.fillRect(x + pad + pos * u, cy, bw * u, 9);
+        pos += bw;
+      }
+    }
+    cy += 9 + 0.9;
+    ctx.textAlign = "left";
+    ctx.font = "bold " + (11 * pt) + "px Arial, Helvetica, sans-serif";
+    if (it.price) ctx.fillText(cur + " " + it.price, x + pad, cy + 11 * pt * 0.85);
+    cy += 11 * pt + 0.9;
+    var fs = 3.6 * pt, lh = fs * 1.18;
+    ctx.font = fs + "px Arial, Helvetica, sans-serif"; ctx.fillStyle = "#333333";
+    var lines = [];
+    coText.split("\n").forEach(function (par) {
+      var words = par.split(/\s+/), line = "";
+      words.forEach(function (wd) {
+        var t = line ? line + " " + wd : wd;
+        if (ctx.measureText(t).width > inner && line) { lines.push(line); line = wd; } else line = t;
+      });
+      if (line) lines.push(line);
+    });
+    lines.forEach(function (ln, k) {
+      var by = cy + fs * 0.85 + k * lh;
+      if (by < y + h) ctx.fillText(ln, x + pad, by);
+    });
+    ctx.restore();
+    if (cut) { ctx.save(); ctx.strokeStyle = "#888888"; ctx.lineWidth = 0.2; ctx.strokeRect(x + 0.1, y + 0.1, w - 0.2, h - 0.2); ctx.restore(); }
+  }
+  function renderCanvas() {
+    var w = Math.max(20, +$("wmm").value || 33), h = Math.max(20, +$("hmm").value || 30), cols = Math.max(1, +$("cols").value || 3);
+    var gap = 2, pm = 4, list = expandLabels(), n = list.length;
+    var rows = Math.max(1, Math.ceil(n / cols));
+    var sw = pm * 2 + Math.min(cols, Math.max(n, 1)) * w + (Math.min(cols, Math.max(n, 1)) - 1) * gap;
+    var sh = pm * 2 + rows * h + (rows - 1) * gap;
+    var cv = document.createElement("canvas");
+    cv.width = Math.round(sw * PPM); cv.height = Math.round(sh * PPM);
+    var ctx = cv.getContext("2d");
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.scale(PPM, PPM);
+    var coName = $("coName").value, coBody = $("coText").value;
+    var coText = coName + (coName && coBody ? "\n" : "") + coBody;
+    list.forEach(function (it, i) {
+      drawLabel(ctx, pm + (i % cols) * (w + gap), pm + Math.floor(i / cols) * (h + gap), w, h, it, $("cur").value, $("sizeWord").value, coText, $("cut").checked);
+    });
+    return { canvas: cv, mmW: sw, mmH: sh };
+  }
+  var dl = null;
+  function saveBlob(blob, name) {
+    if (dl) { dl.save({ filename: name, data: blob }).catch(function () {}); return; }
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 3000);
+  }
+  function downloadPNG() {
+    var r = renderCanvas();
+    r.canvas.toBlob(function (b) { saveBlob(b, "etiquetas.png"); }, "image/png");
+  }
+  function downloadPDF() {
+    var r = renderCanvas(), enc = new TextEncoder();
+    var jpg = atob(r.canvas.toDataURL("image/jpeg", 0.95).split(",")[1]);
+    var img = new Uint8Array(jpg.length);
+    for (var i = 0; i < jpg.length; i++) img[i] = jpg.charCodeAt(i);
+    var pw = (r.mmW * 72 / 25.4).toFixed(2), ph = (r.mmH * 72 / 25.4).toFixed(2);
+    var content = "q " + pw + " 0 0 " + ph + " 0 0 cm /Im0 Do Q";
+    var parts = [], offs = [], len = 0;
+    function add(x) { var b = typeof x === "string" ? enc.encode(x) : x; parts.push(b); len += b.length; }
+    function obj(n, body) { offs[n] = len; add(n + " 0 obj\n"); if (typeof body === "string") add(body); else body.forEach(add); add("\nendobj\n"); }
+    add("%PDF-1.4\n");
+    obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
+    obj(2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+    obj(3, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pw + " " + ph + "] /Resources << /XObject << /Im0 5 0 R >> >> /Contents 4 0 R >>");
+    obj(4, "<< /Length " + content.length + " >>\nstream\n" + content + "\nendstream");
+    obj(5, ["<< /Type /XObject /Subtype /Image /Width " + r.canvas.width + " /Height " + r.canvas.height + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + img.length + " >>\nstream\n", img, "\nendstream"]);
+    var xref = len;
+    var x = "xref\n0 6\n0000000000 65535 f \n";
+    for (var k = 1; k <= 5; k++) x += ("0000000000" + offs[k]).slice(-10) + " 00000 n \n";
+    add(x + "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF");
+    saveBlob(new Blob(parts, { type: "application/pdf" }), "etiquetas.pdf");
+  }
+  if (inFrame) {
+    $("printHint").hidden = false;
+    try {
+      if (window.claude && window.claude.use) {
+        window.claude.use("downloads").then(function (d) {
+          if (d) { dl = d; $("btnPng").hidden = false; $("btnPdf").hidden = false; }
+        }).catch(function () {});
+      }
+    } catch (e) {}
+  } else { $("btnPng").hidden = false; $("btnPdf").hidden = false; $("btnPrint").hidden = false; }
+  $("btnScan").hidden = false;
+  $("btnPng").addEventListener("click", downloadPNG);
+  $("btnPdf").addEventListener("click", downloadPDF);
+  $("btnPrint").addEventListener("click", function () { window.print(); });
+
+  load(); renderItems(); renderSheet(); applyZoom();
+})();
+</script>
+
+</body></html>
